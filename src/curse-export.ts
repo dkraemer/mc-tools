@@ -21,7 +21,7 @@ export class CurseExport extends McToolsBase {
   }
 
   private constructor() {
-    super()
+    super();
   }
 
   private setupOptions(scriptName: string, argvRaw: string[]): ProgramOptions {
@@ -30,7 +30,7 @@ export class CurseExport extends McToolsBase {
 
     // Use an optional configuration file providing the arguments
     if (process.env.MC_CURSE_EXPORT_CONFIG) {
-      const configFile = process.env.MC_CURSE_EXPORT_CONFIG
+      const configFile = process.env.MC_CURSE_EXPORT_CONFIG;
       if (fs.existsSync(configFile)) {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const config: Configuration = require(configFile);
