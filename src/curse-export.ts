@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { program } from 'commander';
-import { McTools } from './mc-tools';
+import { McToolsBase } from './mc-tools';
 
 interface ProgramOptions {
   instanceDir: string,
@@ -15,20 +15,16 @@ interface Configuration {
   args: string[]
 }
 
-export class CurseExport {
-
-  private static errorExit(message: string): void {
-    console.error(message);
-    process.exit(1);
+export class CurseExport extends McToolsBase {
+  public static main(): void {
+    new CurseExport().privateMain();
   }
 
-  private static pathMustExist(pathToCheck: string): void {
-    if (!fs.existsSync(pathToCheck)) {
-      this.errorExit(`[ERROR]: Path not found '${pathToCheck}'`);
-    }
+  private constructor() {
+    super()
   }
 
-  private static setupOptions(scriptName: string, argvRaw: string[]): ProgramOptions {
+  private setupOptions(scriptName: string, argvRaw: string[]): ProgramOptions {
 
     let argv = argvRaw;
 
@@ -75,8 +71,8 @@ Example:
     return options;
   }
 
-  public static main(): void {
-    const scriptName = McTools.COMMAND_PREFIX + path.basename(__filename, '.js');
-    CurseExport.setupOptions(scriptName, process.argv);
+  private privateMain(): void {
+    const scriptName = this.scriptPrefix + path.basename(__filename, '.js');
+    this.setupOptions(scriptName, process.argv);
   }
 }
