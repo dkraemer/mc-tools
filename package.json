@@ -6,7 +6,8 @@
     "mc-curse-export": "./bin/curse-export"
   },
   "scripts": {
-    "build": "tsc -p ."
+    "build": "tsc -p .",
+    "start": "yarn run build && node ./bin/curse-export"
   },
   "repository": {
     "type": "git",
