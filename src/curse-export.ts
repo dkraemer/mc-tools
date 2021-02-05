@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { program } from 'commander';
-import { McTools } from "./mc-tools";
+import { McTools } from './mc-tools';
 
 interface ProgramOptions {
   instanceDir: string,
@@ -17,12 +17,12 @@ interface Configuration {
 
 export class CurseExport {
 
-  private static errorExit(message: string) {
+  private static errorExit(message: string): void {
     console.error(message);
     process.exit(1);
   }
 
-  private static pathMustExist(path: string) {
+  private static pathMustExist(path: string): void {
     if (!fs.existsSync(path)) {
       this.errorExit(`[ERROR]: Path not found '${path}'`);
     }
@@ -36,6 +36,7 @@ export class CurseExport {
     if (process.env.MC_CURSE_EXPORT_CONFIG) {
       const configFile = process.env.MC_CURSE_EXPORT_CONFIG
       if (fs.existsSync(configFile)) {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const config: Configuration = require(configFile);
         argv = argvRaw.slice(0, 2).concat(config.args);
       }
@@ -67,13 +68,15 @@ Example:
 
     const options = program.opts() as ProgramOptions;
 
-    if (options.debug) console.log(options);
+    if (options.debug) {
+      console.log(options);
+    }
 
     return options;
   }
 
-  public static main() {
+  public static main(): void {
     const scriptName = McTools.COMMAND_PREFIX + path.basename(__filename, '.js');
-    const options = CurseExport.setupOptions(scriptName, process.argv);
+    CurseExport.setupOptions(scriptName, process.argv);
   }
 }
