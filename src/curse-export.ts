@@ -22,9 +22,9 @@ export class CurseExport {
     process.exit(1);
   }
 
-  private static pathMustExist(path: string): void {
-    if (!fs.existsSync(path)) {
-      this.errorExit(`[ERROR]: Path not found '${path}'`);
+  private static pathMustExist(pathToCheck: string): void {
+    if (!fs.existsSync(pathToCheck)) {
+      this.errorExit(`[ERROR]: Path not found '${pathToCheck}'`);
     }
   }
 
