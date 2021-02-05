@@ -16,7 +16,14 @@ interface Configuration {
 }
 
 export class CurseExport extends McToolsBase {
+  private static hasInstance = false;
+
   public static main(): void {
+    if (this.hasInstance) {
+      return;
+    }
+
+    this.hasInstance = true;
     new CurseExport().privateMain();
   }
 
