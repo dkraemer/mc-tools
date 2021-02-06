@@ -1,3 +1,5 @@
+import { CommonBase } from './common-base';
+
 export interface ModLoaderManifest {
   id: string,
   primary: boolean
@@ -14,13 +16,13 @@ export interface FileManifest {
   required: boolean
 }
 
-export class Manifest {
+export class Manifest extends CommonBase {
   minecraft: MinecraftManifest = {
     version: '',
     modLoaders: []
   };
-  manifestType = 'minecraftModpack';
-  manifestVersion = 1;
+  readonly manifestType = 'minecraftModpack';
+  readonly manifestVersion = 1;
   name = '';
   version = '';
   author = '';
