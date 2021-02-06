@@ -1,5 +1,3 @@
-import { CommonBase } from './common-base';
-
 export interface ModLoaderManifest {
   id: string,
   primary: boolean
@@ -16,7 +14,7 @@ export interface FileManifest {
   required: boolean
 }
 
-export class Manifest extends CommonBase {
+export class Manifest {
   minecraft: MinecraftManifest = {
     version: '',
     modLoaders: []
@@ -28,4 +26,8 @@ export class Manifest extends CommonBase {
   author = '';
   files: FileManifest[] = [];
   overrides = 'overrides';
+
+  public stringify(): string {
+    return JSON.stringify(this, null, 2);
+  }
 }

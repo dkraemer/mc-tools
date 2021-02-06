@@ -1,10 +1,10 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
+import { writeFile } from 'fs/promises';
 import { program } from 'commander';
 import { McToolsBase } from './mc-tools';
 import { MinecraftInstance } from './curse-minecraft-instance';
 import { Manifest } from './curse-manifest';
-import { CommonBase } from './common-base';
 
 interface ProgramOptions {
   instanceDir: string,
@@ -49,7 +49,7 @@ export class CurseExport extends McToolsBase {
             console.warn(`[WARNING]: Ignoring commandline arguments. Using ${configFile}`);
           })
           .catch(() => {
-            CommonBase.errorExit(`Unable to load ${configFile}`);
+            this.exit(`Unable to load ${configFile}`);
           });
       }
     }
@@ -82,6 +82,7 @@ Example:
     const options = program.opts() as ProgramOptions;
 
     if (options.debug) {
+      this.debugMode = true;
       console.log(options);
     }
 
@@ -93,26 +94,32 @@ Example:
     const options = await this.setupOptions(scriptName, process.argv);
 
     const instanceJsonPath = path.join(options.instanceDir, 'minecraftinstance.json');
-    CommonBase.pathMustExist(instanceJsonPath);
+    const manifestJsonPath = path.join(this.tempDir, 'manifest.json');
+    this.pathMustExist(instanceJsonPath);
 
-    await (import(instanceJsonPath) as Promise<MinecraftInstance>)
-      .then(mci => {
-        const manifest = new Manifest();
-        manifest.minecraft = {
-          version: mci.gameVersion,
-          modLoaders: [{
-            id: mci.baseModLoader.name,
-            primary: true
-          }]
-        };
-        manifest.name = mci.name;
-        manifest.version = options.version;
-        manifest.author = options.author;
+    await
+      (import(instanceJsonPath) as Promise<MinecraftInstance>)
+        .then(async mci => {
+          const manifest = new Manifest();
+          manifest.minecraft = {
+            version: mci.gameVersion,
+            modLoaders: [{
+              id: mci.baseModLoader.name,
+              primary: true
+            }]
+          };
+          manifest.name = mci.name;
+          manifest.version = options.version;
+          manifest.author = options.author;
 
-        manifest.writeFile('test.json', options.force);
-      })
-      .catch(() => {
-        CommonBase.errorExit(`Unable to load ${instanceJsonPath}`);
-      });
+          await writeFile(manifestJsonPath, manifest.stringify(), { flag: options.force ? 'w' : 'wx' })
+            .catch(reason => {
+              this.exit(reason as Error);
+            });
+        })
+        .catch(() => {
+          this.exit(`Unable to load ${instanceJsonPath}`);
+        });
+    this.exit();
   }
 }
