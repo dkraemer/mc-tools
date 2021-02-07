@@ -1,6 +1,6 @@
 import os from 'os';
 import path from 'path';
-import { existsSync, mkdtempSync, rm } from 'fs';
+import * as fs from 'fs-extra';
 
 export abstract class McToolsBase {
   private static readonly tempDirPrefix = 'mc-tools-';
@@ -11,7 +11,7 @@ export abstract class McToolsBase {
   protected constructor() {
     const tempDirPrefix = path.join(os.tmpdir(), McToolsBase.tempDirPrefix);
     try {
-      this.tempDir = mkdtempSync(tempDirPrefix);
+      this.tempDir = fs.mkdtempSync(tempDirPrefix);
     } catch (error) {
       this.exit(error);
     }
@@ -26,13 +26,12 @@ export abstract class McToolsBase {
       returnCode = 1;
     }
 
-    rm(this.tempDir, { recursive: true }, () => {
-      process.exit(returnCode);
-    });
+    fs.removeSync(this.tempDir);
+    process.exit(returnCode);
   }
 
-  public pathMustExist(pathToCheck: string): void {
-    if (!existsSync(pathToCheck)) {
+  public assertPathSync(pathToCheck: string): void {
+    if (!fs.existsSync(pathToCheck)) {
       this.exit(`Path not found '${pathToCheck}'`);
     }
   }

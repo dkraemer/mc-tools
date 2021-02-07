@@ -32,9 +32,11 @@
   },
   "homepage": "https://github.com/dkraemer/mc-tools#readme",
   "dependencies": {
-    "commander": "^7.0.0"
+    "commander": "^7.0.0",
+    "fs-extra": "^9.1.0"
   },
   "devDependencies": {
+    "@types/fs-extra": "^9.0.6",
     "@types/node": "^14.14.25",
     "@typescript-eslint/eslint-plugin": "^4.14.2",
     "@typescript-eslint/parser": "^4.14.2",

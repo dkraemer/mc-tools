@@ -1,4 +1,4 @@
-import fs from 'fs';
+import * as fs from 'fs-extra';
 import path from 'path';
 import { writeFile } from 'fs/promises';
 import { program } from 'commander';
@@ -58,6 +58,8 @@ export class CurseExport extends McToolsBase {
       .requiredOption('-a, --author <author>', 'Set the author of this modpack (required)')
       .requiredOption('-v, --version <version>', 'Set version of this modpack (required)')
       .option('-o, --overrides <paths...>', 'A list of directories and/or files inside the instance directory to include as overrides')
+      //.option('-O, --output-dir')
+
       .option('-f, --force', 'Overwrites existing output files', false)
       .option('-d, --debug', 'Enable debug output of this script', false)
       .helpOption('-h, --help', 'Show this help text')
@@ -83,51 +85,90 @@ Example:
     }
 
     return options;
-  }
+  } // End of setupOptions()
+
+  private async exportMainfest(options: ProgramOptions): Promise<void> {
+    const instanceJsonPath = path.join(options.instanceDir, 'minecraftinstance.json');
+    const manifestJsonPath = path.join(this.tempDir, 'manifest.json');
+    this.assertPathSync(instanceJsonPath);
+
+    // Load instance JSON
+    let mci: MinecraftInstance;
+    try {
+      mci = await (import(instanceJsonPath) as Promise<MinecraftInstance>);
+    } catch (error) {
+      this.exit(`Unable to load ${instanceJsonPath}`);
+      return; // Unreachable code, but ts complains otherwise
+    }
+
+    // Create manifest
+    const manifest = new Manifest();
+    manifest.minecraft = {
+      version: mci.gameVersion,
+      modLoaders: [{
+        id: mci.baseModLoader.name,
+        primary: true
+      }]
+    };
+    manifest.name = mci.name;
+    manifest.version = options.version;
+    manifest.author = options.author;
+
+    manifest.files = mci.installedAddons
+      .sort((a: MinecraftInstalledAddon, b: MinecraftInstalledAddon) => {
+        return a.addonID - b.addonID;
+      })
+      .map<FileManifest>((addon) => {
+        return {
+          projectID: addon.addonID,
+          fileID: addon.installedFile.id,
+          required: true
+        };
+      });
+
+
+    // Write manifest
+    try {
+      await writeFile(manifestJsonPath, manifest.stringify(), { flag: options.force ? 'w' : 'wx' });
+    } catch (error) {
+      this.exit(error);
+    }
+  } // End of exportMainfest()
+
+  private async copyOverrides(options: ProgramOptions): Promise<void> {
+    if (!options.overrides) {
+      return;
+    }
+
+    for (const override of options.overrides) {
+      const srcPath = path.join(options.instanceDir, override);
+      const dstPath = path.join(this.tempDir, override);
+      this.assertPathSync(srcPath);
+      const srcStat = fs.statSync(srcPath);
+
+      if (srcStat.isDirectory()) {
+        fs.ensureDirSync(dstPath);
+      }
+
+      try {
+        await fs.copy(srcPath, dstPath);
+        console.log(srcPath);
+        console.log(dstPath);
+      } catch (error) {
+        this.exit(error);
+      }
+    } // End of for
+  } // End of copyOverrides()
 
   private async privateMain(): Promise<void> {
     const scriptName = this.scriptPrefix + path.basename(__filename, '.js');
     const options = await this.setupOptions(scriptName, process.argv);
 
-    const instanceJsonPath = path.join(options.instanceDir, 'minecraftinstance.json');
-    const manifestJsonPath = path.join(this.tempDir, 'manifest.json');
-    this.pathMustExist(instanceJsonPath);
+    this.assertPathSync(options.instanceDir);
 
-    // Create and save the modpack manifest
-    await
-      (import(instanceJsonPath) as Promise<MinecraftInstance>)
-        .then(async mci => {
-          const manifest = new Manifest();
-          manifest.minecraft = {
-            version: mci.gameVersion,
-            modLoaders: [{
-              id: mci.baseModLoader.name,
-              primary: true
-            }]
-          };
-          manifest.name = mci.name;
-          manifest.version = options.version;
-          manifest.author = options.author;
-          manifest.files = mci.installedAddons
-            .sort((a: MinecraftInstalledAddon, b: MinecraftInstalledAddon) => {
-              return a.addonID - b.addonID;
-            })
-            .map<FileManifest>((addon) => {
-              return {
-                projectID: addon.addonID,
-                fileID: addon.installedFile.id,
-                required: true
-              };
-            });
+    await this.exportMainfest(options);
+    await this.copyOverrides(options);
 
-          await writeFile(manifestJsonPath, manifest.stringify(), { flag: options.force ? 'w' : 'wx' })
-            .catch(reason => {
-              this.exit(reason as Error);
-            });
-        }) // End of import.then
-        .catch(() => {
-          this.exit(`Unable to load ${instanceJsonPath}`);
-        });
     this.exit();
   } // End of privateMain()
 } // End of class CurseExport
