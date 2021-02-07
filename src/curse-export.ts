@@ -3,8 +3,8 @@ import path from 'path';
 import { writeFile } from 'fs/promises';
 import { program } from 'commander';
 import { McToolsBase } from './mc-tools';
-import { MinecraftInstance } from './curse-minecraft-instance';
-import { Manifest } from './curse-manifest';
+import { MinecraftInstalledAddon, MinecraftInstance } from './curse-minecraft-instance';
+import { FileManifest, Manifest } from './curse-manifest';
 
 interface ProgramOptions {
   instanceDir: string,
@@ -29,10 +29,6 @@ export class CurseExport extends McToolsBase {
 
     this.hasInstance = true;
     new CurseExport().privateMain();
-  }
-
-  private constructor() {
-    super();
   }
 
   private async setupOptions(scriptName: string, argvRaw: string[]): Promise<ProgramOptions> {
@@ -97,6 +93,7 @@ Example:
     const manifestJsonPath = path.join(this.tempDir, 'manifest.json');
     this.pathMustExist(instanceJsonPath);
 
+    // Create and save the modpack manifest
     await
       (import(instanceJsonPath) as Promise<MinecraftInstance>)
         .then(async mci => {
@@ -111,15 +108,26 @@ Example:
           manifest.name = mci.name;
           manifest.version = options.version;
           manifest.author = options.author;
+          manifest.files = mci.installedAddons
+            .sort((a: MinecraftInstalledAddon, b: MinecraftInstalledAddon) => {
+              return a.addonID - b.addonID;
+            })
+            .map<FileManifest>((addon) => {
+              return {
+                projectID: addon.addonID,
+                fileID: addon.installedFile.id,
+                required: true
+              };
+            });
 
           await writeFile(manifestJsonPath, manifest.stringify(), { flag: options.force ? 'w' : 'wx' })
             .catch(reason => {
               this.exit(reason as Error);
             });
-        })
+        }) // End of import.then
         .catch(() => {
           this.exit(`Unable to load ${instanceJsonPath}`);
         });
     this.exit();
-  }
-}
+  } // End of privateMain()
+} // End of class CurseExport
