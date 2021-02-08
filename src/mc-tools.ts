@@ -10,11 +10,7 @@ export abstract class McToolsBase {
 
   protected constructor() {
     const tempDirPrefix = path.join(os.tmpdir(), McToolsBase.tempDirPrefix);
-    try {
-      this.tempDir = fs.mkdtempSync(tempDirPrefix);
-    } catch (error) {
-      this.exit(error);
-    }
+    this.tempDir = fs.mkdtempSync(tempDirPrefix);
   }
 
   public exit(error: Error | string | void): void {
