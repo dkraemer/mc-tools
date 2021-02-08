@@ -12,6 +12,7 @@ interface ProgramOptions {
   author: string,
   version: string,
   overrides: string[] | undefined,
+  zip: boolean,
   force: boolean,
   debug: boolean
 }
@@ -36,7 +37,9 @@ export class CurseExport extends McToolsBase {
 
     this.hasInstance = true;
     const instance = new CurseExport();
-    instance.privateMain();
+    instance.privateMain().then(() => {
+      instance.exit();
+    });
   }
 
   private async setupOptions(scriptName: string, argvRaw: string[]): Promise<ProgramOptions> {
@@ -58,12 +61,13 @@ export class CurseExport extends McToolsBase {
     // Commander setup
     program
       .name(scriptName)
-      .description('Exports a CurseForge minecraft instance')
+      .description('Exports a CurseForge minecraft instance as ZIP archive')
       .requiredOption('-i, --instance-dir <directory>', 'Path to CurseForge instance directory (required)')
       .requiredOption('-a, --author <author>', 'Set the author of this modpack (required)')
       .requiredOption('-v, --version <version>', 'Set version of this modpack (required)')
       .option('-o, --overrides <paths...>', 'A list of directories and/or files inside the instance directory to include as overrides')
-      .option('-f, --force', 'Overwrites existing output files', false)
+      .option('--no-zip', 'Don\'t create a ZIP archive. Place the output files in the current directory')
+      .option('-f, --force', 'Overwrite existing output files', false)
       .option('-d, --debug', 'Enable debug output of this script', false)
       .helpOption('-h, --help', 'Show this help text')
       .addHelpText('after', `
@@ -77,6 +81,7 @@ Example:
     - Copies the directory C:\\CurseForge\\Instances\\MyModpack\\config\\exampleMod to overrides\\config\\exampleMod
     - Copies the directory C:\\CurseForge\\Instances\\MyModpack\\scripts to overrides\\scripts
     - Copies the file C:\\CurseForge\\Instances\\MyModpack\\options.txt to overrides\\config\\options.txt
+    - Creates a ZIP archive containing a manifest and the overrides directory
   `)
       .parse(argv);
 
@@ -168,7 +173,7 @@ Example:
 
   private async createZipFile(manifest: Manifest, manifestPath: string, overridesPath: string): Promise<ZipFileInfo> {
     const archive = archiver('zip');
-    const zipFilename = `${manifest.name}-${manifest.minecraft.version}-${manifest.version}.zip`;
+    const zipFilename = `${manifest.name}-${manifest.version}.zip`;
     const zipFilePath = path.join(this.tempDir, zipFilename);
     const content = fs.createWriteStream(zipFilePath, { flags: 'w', encoding: 'binary' });
 
@@ -207,18 +212,30 @@ Example:
     const overridesPath = path.join(this.tempDir, manifest.overrides);
     await this.copyOverrides(options, overridesPath);
 
-    const zipFileInfo = await this.createZipFile(manifest, manifestPath, overridesPath);
+    if (options.zip) {
+      const zipFileInfo = await this.createZipFile(manifest, manifestPath, overridesPath);
+      this.assertPathNotExistSync(zipFileInfo.filename, options.force);
 
-    if (fs.existsSync(zipFileInfo.filename) && !options.force) {
-      this.exit(`${zipFileInfo.filename} exists and option '--force' was not used`);
-    }
+      try {
+        await fs.move(zipFileInfo.fullPath, zipFileInfo.filename, { overwrite: options.force });
+      } catch (error) {
+        this.exit(error);
+      }
+
+      // Exits the script
+      return;
+
+    } // End of if(options.zip)
+
+    this.assertPathNotExistSync(this.manifestFilename, options.force);
+    this.assertPathNotExistSync(manifest.overrides, options.force);
 
     try {
-      await fs.move(zipFileInfo.fullPath, zipFileInfo.filename, { overwrite: options.force });
+      fs.ensureDirSync(manifest.overrides);
+      await fs.copy(manifestPath, this.manifestFilename, { overwrite: options.force });
+      await fs.copy(overridesPath, manifest.overrides, { overwrite: options.force });
     } catch (error) {
       this.exit(error);
     }
-
-    this.exit();
   } // End of privateMain()
 } // End of class CurseExport

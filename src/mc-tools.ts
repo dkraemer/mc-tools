@@ -14,21 +14,26 @@ export abstract class McToolsBase {
   }
 
   public exit(error: Error | string | void): void {
-    let returnCode = 0;
+    fs.removeSync(this.tempDir);
 
     if (error) {
-      const msg = (error instanceof Error) ? error.message : error;
-      console.error(`[ERROR]: ${msg}`);
-      returnCode = 1;
+      const message = (typeof error === 'string' || this.debugMode) ? error : error.message;
+      console.error(`[ERROR]: ${message}`);
+      process.exit(1);
     }
 
-    fs.removeSync(this.tempDir);
-    process.exit(returnCode);
+    process.exitCode = 0;
   }
 
   public assertPathSync(pathToCheck: string): void {
     if (!fs.existsSync(pathToCheck)) {
       this.exit(`Path not found '${pathToCheck}'`);
+    }
+  }
+
+  public assertPathNotExistSync(pathToCheck: string, force: boolean): void {
+    if (fs.existsSync(pathToCheck) && !force) {
+      this.exit(`${pathToCheck} exists and option '--force' was not used`);
     }
   }
 }
