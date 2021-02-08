@@ -1,5 +1,5 @@
 {
-  "name": "mc-tools",
+  "name": "minecraft-tools",
   "version": "0.2.0-beta",
   "description": "A collection of tools for Minecraft modpack authors",
   "bin": {

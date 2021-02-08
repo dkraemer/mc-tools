@@ -1,4 +1,10 @@
+/.github
+/.vscode
 /src
+/overrides
+/*.zip
 /.editorconfig
+/.eslintignore
+/.eslintrc.js
+/manifest.json
 /tsconfig.json
-*.zip
