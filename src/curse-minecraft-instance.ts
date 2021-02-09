@@ -1,7 +1,8 @@
 export interface MinecraftInstalledAddon {
   addonID: number,
   installedFile: {
-    id: number
+    id: number,
+    downloadUrl: string
   }
 }
 

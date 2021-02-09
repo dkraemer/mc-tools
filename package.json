@@ -1,6 +1,6 @@
 {
   "name": "minecraft-tools",
-  "version": "0.2.0-beta",
+  "version": "1.0.0-alpha.1",
   "description": "A collection of tools for Minecraft modpack authors",
   "bin": {
     "mc-curse-export": "./bin/curse-export"

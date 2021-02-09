@@ -6,6 +6,7 @@ import { program } from 'commander';
 import { McToolsBase } from './mc-tools';
 import { MinecraftInstalledAddon, MinecraftInstance } from './curse-minecraft-instance';
 import { FileManifest, Manifest } from './curse-manifest';
+import { CurseDownloadMeta, CurseDownloads } from './curse-downloads';
 
 interface ProgramOptions {
   instanceDir: string,
@@ -13,6 +14,7 @@ interface ProgramOptions {
   version: string,
   overrides: string[] | undefined,
   zip: boolean,
+  urls: boolean,
   force: boolean,
   debug: boolean
 }
@@ -29,6 +31,7 @@ interface ZipFileInfo {
 export class CurseExport extends McToolsBase {
   private static hasInstance = false;
   private readonly manifestFilename = 'manifest.json';
+  private readonly curseDownloadsFilename = 'curse-downloads.json';
 
   public static main(): void {
     if (this.hasInstance) {
@@ -42,16 +45,15 @@ export class CurseExport extends McToolsBase {
     });
   }
 
-  private async setupOptions(scriptName: string, argvRaw: string[]): Promise<ProgramOptions> {
-
-    let argv = argvRaw;
+  private async setupOptions(scriptName: string): Promise<ProgramOptions> {
+    let argv = process.argv;
 
     // Use an optional configuration file providing the arguments
     const configFile = process.env.MC_CURSE_EXPORT_CONFIG;
     if (configFile && fs.existsSync(configFile)) {
       try {
         const config = await (import(configFile) as Promise<Configuration>);
-        argv = argvRaw.slice(0, 2).concat(config.args);
+        argv = process.argv.slice(0, 2).concat(config.args);
         console.warn(`[WARNING]: Ignoring commandline arguments. Using ${configFile}`);
       } catch (error) {
         this.exit(`Unable to load ${configFile}`);
@@ -61,12 +63,13 @@ export class CurseExport extends McToolsBase {
     // Commander setup
     program
       .name(scriptName)
-      .description('Exports a CurseForge minecraft instance as ZIP archive')
+      .description('Exports a Overwolf CurseForge (Beta) Minecraft Instance as ZIP archive')
       .requiredOption('-i, --instance-dir <directory>', 'Path to CurseForge instance directory (required)')
       .requiredOption('-a, --author <author>', 'Set the author of this modpack (required)')
       .requiredOption('-v, --version <version>', 'Set version of this modpack (required)')
       .option('-o, --overrides <paths...>', 'A list of directories and/or files inside the instance directory to include as overrides')
-      .option('--no-zip', 'Don\'t create a ZIP archive. Place the output files in the current directory')
+      .option('-z, --no-zip', 'Don\'t create a ZIP archive. Place the output files in the current directory')
+      .option('-u, --urls', `Save the list of mod download URLs to ${this.curseDownloadsFilename}`, false)
       .option('-f, --force', 'Overwrite existing output files', false)
       .option('-d, --debug', 'Enable debug output of this script', false)
       .helpOption('-h, --help', 'Show this help text')
@@ -95,19 +98,19 @@ Example:
     return options;
   } // End of setupOptions()
 
-  private async exportMainfest(options: ProgramOptions, manifestPath: string): Promise<Manifest> {
+  private async importMinecraftInstance(options: ProgramOptions): Promise<MinecraftInstance> {
     const instanceJsonPath = path.join(options.instanceDir, 'minecraftinstance.json');
     this.assertPathSync(instanceJsonPath);
 
-    // Load instance JSON
-    let mci: MinecraftInstance;
     try {
-      mci = await (import(instanceJsonPath) as Promise<MinecraftInstance>);
+      return await (import(instanceJsonPath) as Promise<MinecraftInstance>);
     } catch (error) {
       this.exit(`Unable to load ${instanceJsonPath}`);
-      return new Manifest(); // Unreachable code, but ts complains otherwise
+      throw error; // Unreachable code, but ts complains otherwise
     }
+  } // End of importMinecraftInstance()
 
+  private async exportMainfest(mci: MinecraftInstance, options: ProgramOptions, manifestPath: string): Promise<Manifest> {
     // Create manifest
     const manifest = new Manifest();
     manifest.minecraft = {
@@ -144,8 +147,31 @@ Example:
     return manifest;
   } // End of exportMainfest()
 
-  private async copyOverrides(options: ProgramOptions, overridesPath: string): Promise<void> {
+  private async exportDownloadUrls(mci: MinecraftInstance, options: ProgramOptions, downloadsFilePath: string): Promise<void> {
+    const curseDownloads = new CurseDownloads(mci.gameVersion);
+    curseDownloads.downloads =
+      mci.installedAddons
+        .sort((a: MinecraftInstalledAddon, b: MinecraftInstalledAddon) => {
+          return a.addonID - b.addonID;
+        })
+        .map<CurseDownloadMeta>(addon => {
+          return {
+            projectId: addon.addonID,
+            fileId: addon.installedFile.id,
+            url: addon.installedFile.downloadUrl
+          };
+        });
 
+    // Write downloads file
+    try {
+      await writeFile(downloadsFilePath, curseDownloads.stringify(), { flag: options.force ? 'w' : 'wx' });
+    } catch (error) {
+      this.exit(error);
+    }
+
+  } // End of exportDownloadUrls()
+
+  private async copyOverrides(options: ProgramOptions, overridesPath: string): Promise<void> {
     // Create overrides dir always
     fs.ensureDirSync(overridesPath);
 
@@ -201,17 +227,32 @@ Example:
   } // End of createZipFileSync()
 
   private async privateMain(): Promise<void> {
-    const scriptName = this.scriptPrefix + path.basename(__filename, '.js');
-    const options = await this.setupOptions(scriptName, process.argv);
 
+    // Parse command-line arguments
+    const scriptName = this.scriptPrefix + path.basename(__filename, '.js');
+    const options = await this.setupOptions(scriptName);
+
+    // Instance directory must exist
     this.assertPathSync(options.instanceDir);
 
-    const manifestPath = path.join(this.tempDir, this.manifestFilename);
-    const manifest = await this.exportMainfest(options, manifestPath);
+    // Read minecraftinstance.json
+    const mci = await this.importMinecraftInstance(options);
 
+    // Create manifest.json
+    const manifestPath = path.join(this.tempDir, this.manifestFilename);
+    const manifest = await this.exportMainfest(mci, options, manifestPath);
+
+    // Copy files to overrides directory
     const overridesPath = path.join(this.tempDir, manifest.overrides);
     await this.copyOverrides(options, overridesPath);
 
+    // Create downloads JSON on demand
+    if (options.urls) {
+      this.assertPathNotExistSync(this.curseDownloadsFilename, options.force);
+      await this.exportDownloadUrls(mci, options, this.curseDownloadsFilename);
+    }
+
+    // Create ZIP or...
     if (options.zip) {
       const zipFileInfo = await this.createZipFile(manifest, manifestPath, overridesPath);
       this.assertPathNotExistSync(zipFileInfo.filename, options.force);
@@ -227,6 +268,7 @@ Example:
 
     } // End of if(options.zip)
 
+    // ...create no ZIP, just copy stuff to current working directory
     this.assertPathNotExistSync(this.manifestFilename, options.force);
     this.assertPathNotExistSync(manifest.overrides, options.force);
 
