@@ -8,9 +8,10 @@
     "mc-curse-export": "./bin/curse-export"
   },
   "scripts": {
+    "clean": "git clean -dXf --exclude=\"!node_modules/\"",
     "build": "tsc -p .",
     "lint": "yarn eslint .",
-    "pre-commit": "yarn lint && yarn build",
+    "pre-commit": "yarn lint && yarn clean && yarn build",
     "mc-curse-export": "yarn build && node ./bin/curse-export"
   },
   "husky": {
