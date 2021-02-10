@@ -38,7 +38,8 @@
   "dependencies": {
     "archiver": "^5.2.0",
     "commander": "^7.0.0",
-    "fs-extra": "^9.1.0"
+    "fs-extra": "^9.1.0",
+    "mc-curseforge-api": "^2.2.3"
   },
   "devDependencies": {
     "@types/archiver": "^5.1.0",
