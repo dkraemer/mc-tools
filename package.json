@@ -1,7 +1,9 @@
 {
   "name": "@dkraemer/mc-tools",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "description": "A collection of tools for Minecraft modpack authors",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
   "bin": {
     "mc-curse-export": "./bin/curse-export"
   },
