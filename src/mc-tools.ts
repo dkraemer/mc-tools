@@ -13,7 +13,6 @@ export abstract class McToolsBase {
   protected readonly scriptPrefix = 'mc-';
   protected readonly optionsFilename = 'mc-tools.json';
   protected readonly manifestFilename = 'manifest.json';
-  protected readonly curseDownloadsFilename = 'curse-downloads.json';
 
   protected constructor() {
     const tempDirPrefix = path.join(os.tmpdir(), this.tempDirPrefix);

@@ -7,7 +7,6 @@ import { McToolsBase } from './mc-tools';
 import { CurseExportOptions } from './curse-export-options';
 import { MinecraftInstalledAddon, MinecraftInstance } from './curse-minecraft-instance';
 import { FileManifest, Manifest } from './curse-manifest';
-import { CurseDownloadMeta, CurseDownloads } from './curse-downloads';
 
 export class CurseExport extends McToolsBase {
   private static hasInstance = false;
@@ -46,13 +45,12 @@ export class CurseExport extends McToolsBase {
     const program = new Command();
     program
       .name(this.scriptName)
-      .description('Exports a Overwolf CurseForge (Beta) Minecraft Instance as ZIP archive')
+      .description('Exports an Overwolf CurseForge (Beta) Minecraft Instance as ZIP archive')
       .requiredOption('-i, --instance-dir <directory>', 'Path to CurseForge instance directory (required)')
       .requiredOption('-a, --author <author>', 'Set the author of this modpack (required)')
       .requiredOption('-v, --version <version>', 'Set version of this modpack (required)')
       .option('-o, --overrides <paths...>', 'A list of directories and/or files inside the instance directory to include as overrides')
       .option('-z, --no-zip', 'Don\'t create a ZIP archive. Place the output files in the current directory')
-      .option('-u, --urls', `Save the list of mod download URLs to ${this.curseDownloadsFilename}`, false)
       .option('-f, --force', 'Overwrite existing output files', false)
       .option('-d, --debug', 'Enable debug output of this script', false)
       .helpOption('-h, --help', 'Show this help text')
@@ -122,30 +120,6 @@ Example:
 
     return manifest;
   } // End of exportMainfest()
-
-  private async exportDownloadUrls(mci: MinecraftInstance, downloadsFilePath: string): Promise<void> {
-    const curseDownloads = new CurseDownloads(mci.gameVersion);
-    curseDownloads.downloads =
-      mci.installedAddons
-        .sort((a: MinecraftInstalledAddon, b: MinecraftInstalledAddon) => {
-          return a.addonID - b.addonID;
-        })
-        .map<CurseDownloadMeta>(addon => {
-          return {
-            projectId: addon.addonID,
-            fileId: addon.installedFile.id,
-            url: addon.installedFile.downloadUrl
-          };
-        });
-
-    // Write downloads file
-    try {
-      await writeFile(downloadsFilePath, curseDownloads.stringify(), { flag: this.options.force ? 'w' : 'wx' });
-    } catch (error) {
-      this.exit(error);
-    }
-
-  } // End of exportDownloadUrls()
 
   private async copyOverrides(overridesPath: string): Promise<void> {
     // Create overrides dir always
@@ -227,12 +201,6 @@ Example:
     // Copy files to overrides directory
     const overridesPath = path.join(this.tempDir, manifest.overrides);
     await this.copyOverrides(overridesPath);
-
-    // Create downloads JSON on demand
-    if (this.options.urls) {
-      this.assertPathNotExistSync(this.curseDownloadsFilename, this.options.force);
-      await this.exportDownloadUrls(mci, this.curseDownloadsFilename);
-    }
 
     if (!this.options.zip) {
       // Create no ZIP, just copy stuff to current working directory
