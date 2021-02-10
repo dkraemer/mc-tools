@@ -6,5 +6,6 @@
 /.editorconfig
 /.eslintignore
 /.eslintrc.js
+/.gitattributes
 /manifest.json
 /tsconfig.json
