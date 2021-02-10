@@ -5,14 +5,16 @@
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "bin": {
-    "mc-curse-export": "./bin/curse-export"
+    "mc-curse-export": "./bin/curse-export",
+    "mc-curse-addon-list": "./bin/curse-addon-list"
   },
   "scripts": {
     "clean": "git clean -dXf --exclude=\"!node_modules/\"",
     "build": "tsc -p .",
     "lint": "yarn eslint .",
     "pre-commit": "yarn lint && yarn clean && yarn build",
-    "mc-curse-export": "yarn build && node ./bin/curse-export"
+    "mc-curse-export": "yarn build && node ./bin/curse-export",
+    "mc-curse-addon-list": "yarn build && node ./bin/curse-addon-list"
   },
   "husky": {
     "hooks": {
