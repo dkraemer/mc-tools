@@ -1,18 +1,19 @@
 {
   "name": "@dkraemer/mc-tools",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "A collection of tools for Minecraft modpack authors",
   "bin": {
     "mc-curse-export": "./bin/curse-export"
   },
   "scripts": {
     "build": "tsc -p .",
-    "start": "yarn run build && node ./bin/curse-export",
-    "lint": "yarn eslint ."
+    "lint": "yarn eslint .",
+    "pre-commit": "yarn lint && yarn build",
+    "mc-curse-export": "yarn build && node ./bin/curse-export"
   },
   "husky": {
     "hooks": {
-      "pre-commit": "yarn lint",
+      "pre-commit": "yarn pre-commit",
       "pre-push": ""
     }
   },

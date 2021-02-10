@@ -2,36 +2,21 @@ import * as fs from 'fs-extra';
 import path from 'path';
 import archiver from 'archiver';
 import { writeFile } from 'fs/promises';
-import { program } from 'commander';
+import { Command } from 'commander';
 import { McToolsBase } from './mc-tools';
+import { CurseExportOptions } from './curse-export-options';
 import { MinecraftInstalledAddon, MinecraftInstance } from './curse-minecraft-instance';
 import { FileManifest, Manifest } from './curse-manifest';
 import { CurseDownloadMeta, CurseDownloads } from './curse-downloads';
 
-interface ProgramOptions {
-  instanceDir: string,
-  author: string,
-  version: string,
-  overrides: string[] | undefined,
-  zip: boolean,
-  urls: boolean,
-  force: boolean,
-  debug: boolean
-}
-
-interface Configuration {
-  args: string[]
-}
-
-interface ZipFileInfo {
-  fullPath: string,
-  filename: string
-}
-
 export class CurseExport extends McToolsBase {
   private static hasInstance = false;
-  private readonly manifestFilename = 'manifest.json';
-  private readonly curseDownloadsFilename = 'curse-downloads.json';
+  private readonly scriptName: string;
+  private options: CurseExportOptions = {
+    instanceDir: '',
+    author: '',
+    version: ''
+  };
 
   public static main(): void {
     if (this.hasInstance) {
@@ -45,24 +30,22 @@ export class CurseExport extends McToolsBase {
     });
   }
 
-  private async setupOptions(scriptName: string): Promise<ProgramOptions> {
-    let argv = process.argv;
+  constructor() {
+    super();
+    this.scriptName = this.scriptPrefix + path.basename(__filename, '.js');
+  }
 
-    // Use an optional configuration file providing the arguments
-    const configFile = process.env.MC_CURSE_EXPORT_CONFIG;
-    if (configFile && fs.existsSync(configFile)) {
-      try {
-        const config = await (import(configFile) as Promise<Configuration>);
-        argv = process.argv.slice(0, 2).concat(config.args);
-        console.warn(`[WARNING]: Ignoring commandline arguments. Using ${configFile}`);
-      } catch (error) {
-        this.exit(`Unable to load ${configFile}`);
-      }
+  private parseOptions(): void {
+    // Command-line arguments absent and optionsfile is present.
+    if (process.argv.length === 2 && this.fileOptions) {
+      this.options = this.fileOptions.export;
+      return;
     }
 
     // Commander setup
+    const program = new Command();
     program
-      .name(scriptName)
+      .name(this.scriptName)
       .description('Exports a Overwolf CurseForge (Beta) Minecraft Instance as ZIP archive')
       .requiredOption('-i, --instance-dir <directory>', 'Path to CurseForge instance directory (required)')
       .requiredOption('-a, --author <author>', 'Set the author of this modpack (required)')
@@ -75,7 +58,7 @@ export class CurseExport extends McToolsBase {
       .helpOption('-h, --help', 'Show this help text')
       .addHelpText('after', `
 Example:
-  $ ${scriptName} -i C:\\CurseForge\\Instances\\MyModpack -a omgPacks -v 0.0.1-alpha -o config -o scripts -o options.txt
+  $ ${this.scriptName} -i C:\\CurseForge\\Instances\\MyModpack -a omgPacks -v 0.0.1-alpha -o config -o scripts -o options.txt
 
   What it does:
     - Exports the CurseForge Minecraft instance in C:\\CurseForge\\Instances\\MyModpack
@@ -83,23 +66,16 @@ Example:
     - Sets 0.0.1-alpha as modpack version
     - Copies the directory C:\\CurseForge\\Instances\\MyModpack\\config\\exampleMod to overrides\\config\\exampleMod
     - Copies the directory C:\\CurseForge\\Instances\\MyModpack\\scripts to overrides\\scripts
-    - Copies the file C:\\CurseForge\\Instances\\MyModpack\\options.txt to overrides\\config\\options.txt
+    - Copies the file C:\\CurseForge\\Instances\\MyModpack\\options.txt to overrides\\options.txt
     - Creates a ZIP archive containing a manifest and the overrides directory
   `)
-      .parse(argv);
+      .parse(process.argv);
 
-    const options = program.opts() as ProgramOptions;
+    this.options = program.opts() as CurseExportOptions;
+  } // End of parseOptions()
 
-    if (options.debug) {
-      this.debugMode = true;
-      console.debug(options);
-    }
-
-    return options;
-  } // End of setupOptions()
-
-  private async importMinecraftInstance(options: ProgramOptions): Promise<MinecraftInstance> {
-    const instanceJsonPath = path.join(options.instanceDir, 'minecraftinstance.json');
+  private async importMinecraftInstance(): Promise<MinecraftInstance> {
+    const instanceJsonPath = path.join(this.options.instanceDir, 'minecraftinstance.json');
     this.assertPathSync(instanceJsonPath);
 
     try {
@@ -110,7 +86,7 @@ Example:
     }
   } // End of importMinecraftInstance()
 
-  private async exportMainfest(mci: MinecraftInstance, options: ProgramOptions, manifestPath: string): Promise<Manifest> {
+  private async exportMainfest(mci: MinecraftInstance, manifestPath: string): Promise<Manifest> {
     // Create manifest
     const manifest = new Manifest();
     manifest.minecraft = {
@@ -121,25 +97,25 @@ Example:
       }]
     };
     manifest.name = mci.name;
-    manifest.version = options.version;
-    manifest.author = options.author;
+    manifest.version = this.options.version;
+    manifest.author = this.options.author;
 
-    manifest.files = mci.installedAddons
-      .sort((a: MinecraftInstalledAddon, b: MinecraftInstalledAddon) => {
-        return a.addonID - b.addonID;
-      })
-      .map<FileManifest>((addon) => {
-        return {
-          projectID: addon.addonID,
-          fileID: addon.installedFile.id,
-          required: true
-        };
-      });
-
+    manifest.files =
+      mci.installedAddons
+        .sort((a: MinecraftInstalledAddon, b: MinecraftInstalledAddon) => {
+          return a.addonID - b.addonID;
+        })
+        .map<FileManifest>((addon) => {
+          return {
+            projectID: addon.addonID,
+            fileID: addon.installedFile.id,
+            required: true
+          };
+        });
 
     // Write manifest
     try {
-      await writeFile(manifestPath, manifest.stringify(), { flag: options.force ? 'w' : 'wx' });
+      await writeFile(manifestPath, manifest.stringify(), { flag: this.options.force ? 'w' : 'wx' });
     } catch (error) {
       this.exit(error);
     }
@@ -147,7 +123,7 @@ Example:
     return manifest;
   } // End of exportMainfest()
 
-  private async exportDownloadUrls(mci: MinecraftInstance, options: ProgramOptions, downloadsFilePath: string): Promise<void> {
+  private async exportDownloadUrls(mci: MinecraftInstance, downloadsFilePath: string): Promise<void> {
     const curseDownloads = new CurseDownloads(mci.gameVersion);
     curseDownloads.downloads =
       mci.installedAddons
@@ -164,23 +140,23 @@ Example:
 
     // Write downloads file
     try {
-      await writeFile(downloadsFilePath, curseDownloads.stringify(), { flag: options.force ? 'w' : 'wx' });
+      await writeFile(downloadsFilePath, curseDownloads.stringify(), { flag: this.options.force ? 'w' : 'wx' });
     } catch (error) {
       this.exit(error);
     }
 
   } // End of exportDownloadUrls()
 
-  private async copyOverrides(options: ProgramOptions, overridesPath: string): Promise<void> {
+  private async copyOverrides(overridesPath: string): Promise<void> {
     // Create overrides dir always
     fs.ensureDirSync(overridesPath);
 
-    if (!options.overrides) {
+    if (!this.options.overrides) {
       return;
     }
 
-    for (const override of options.overrides) {
-      const srcPath = path.join(options.instanceDir, override);
+    for (const override of this.options.overrides) {
+      const srcPath = path.join(this.options.instanceDir, override);
       const dstPath = path.join(overridesPath, override);
       this.assertPathSync(srcPath);
       const srcStat = fs.statSync(srcPath);
@@ -197,7 +173,7 @@ Example:
     } // End of for
   } // End of copyOverrides()
 
-  private async createZipFile(manifest: Manifest, manifestPath: string, overridesPath: string): Promise<ZipFileInfo> {
+  private async createZipFile(manifest: Manifest, manifestPath: string, overridesPath: string): Promise<string> {
     const archive = archiver('zip');
     const zipFilename = `${manifest.name}-${manifest.version}.zip`;
     const zipFilePath = path.join(this.tempDir, zipFilename);
@@ -217,67 +193,71 @@ Example:
 
     archive.pipe(content);
     archive.file(manifestPath, { name: this.manifestFilename });
-    archive.directory(overridesPath, manifest.overrides);
+
+    if (this.options.overrides) {
+      archive.directory(overridesPath, manifest.overrides);
+    } else {
+      // Create empty overrides directory entry
+      // See: https://github.com/archiverjs/node-archiver/issues/52#issuecomment-39236148
+      archive.append('', { name: path.join(manifest.overrides, path.sep) });
+    }
     await archive.finalize();
 
-    return {
-      filename: zipFilename,
-      fullPath: zipFilePath
-    };
+    return zipFilePath;
   } // End of createZipFileSync()
 
   private async privateMain(): Promise<void> {
 
-    // Parse command-line arguments
-    const scriptName = this.scriptPrefix + path.basename(__filename, '.js');
-    const options = await this.setupOptions(scriptName);
+    // Get options
+    this.parseOptions();
+
+    // Set debug mode for various methods
+    this.debugMode = this.options.debug;
 
     // Instance directory must exist
-    this.assertPathSync(options.instanceDir);
+    this.assertPathSync(this.options.instanceDir);
 
     // Read minecraftinstance.json
-    const mci = await this.importMinecraftInstance(options);
+    const mci = await this.importMinecraftInstance();
 
     // Create manifest.json
     const manifestPath = path.join(this.tempDir, this.manifestFilename);
-    const manifest = await this.exportMainfest(mci, options, manifestPath);
+    const manifest = await this.exportMainfest(mci, manifestPath);
 
     // Copy files to overrides directory
     const overridesPath = path.join(this.tempDir, manifest.overrides);
-    await this.copyOverrides(options, overridesPath);
+    await this.copyOverrides(overridesPath);
 
     // Create downloads JSON on demand
-    if (options.urls) {
-      this.assertPathNotExistSync(this.curseDownloadsFilename, options.force);
-      await this.exportDownloadUrls(mci, options, this.curseDownloadsFilename);
+    if (this.options.urls) {
+      this.assertPathNotExistSync(this.curseDownloadsFilename, this.options.force);
+      await this.exportDownloadUrls(mci, this.curseDownloadsFilename);
     }
 
-    // Create ZIP or...
-    if (options.zip) {
-      const zipFileInfo = await this.createZipFile(manifest, manifestPath, overridesPath);
-      this.assertPathNotExistSync(zipFileInfo.filename, options.force);
+    if (!this.options.zip) {
+      // Create no ZIP, just copy stuff to current working directory
+      this.assertPathNotExistSync(this.manifestFilename, this.options.force);
+      this.assertPathNotExistSync(manifest.overrides, this.options.force);
 
       try {
-        await fs.move(zipFileInfo.fullPath, zipFileInfo.filename, { overwrite: options.force });
+        fs.ensureDirSync(manifest.overrides);
+        await fs.copy(manifestPath, this.manifestFilename, { overwrite: this.options.force });
+        await fs.copy(overridesPath, manifest.overrides, { overwrite: this.options.force });
       } catch (error) {
         this.exit(error);
       }
+    } else {
+      // Create ZIP
+      const zipFilePath = await this.createZipFile(manifest, manifestPath, overridesPath);
+      const zipFilename = path.basename(zipFilePath);
 
-      // Exits the script
-      return;
+      this.assertPathNotExistSync(zipFilename, this.options.force);
 
-    } // End of if(options.zip)
-
-    // ...create no ZIP, just copy stuff to current working directory
-    this.assertPathNotExistSync(this.manifestFilename, options.force);
-    this.assertPathNotExistSync(manifest.overrides, options.force);
-
-    try {
-      fs.ensureDirSync(manifest.overrides);
-      await fs.copy(manifestPath, this.manifestFilename, { overwrite: options.force });
-      await fs.copy(overridesPath, manifest.overrides, { overwrite: options.force });
-    } catch (error) {
-      this.exit(error);
+      try {
+        await fs.move(zipFilePath, zipFilename, { overwrite: this.options.force });
+      } catch (error) {
+        this.exit(error);
+      }
     }
   } // End of privateMain()
 } // End of class CurseExport
