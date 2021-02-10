@@ -47,10 +47,10 @@ export class CurseExport extends McToolsBase {
       .name(this.scriptName)
       .description('Exports an Overwolf CurseForge (Beta) Minecraft Instance as ZIP archive')
       .requiredOption('-i, --instance-dir <directory>', 'Path to CurseForge instance directory (required)')
-      .requiredOption('-a, --author <author>', 'Set the author of this modpack (required)')
-      .requiredOption('-v, --version <version>', 'Set version of this modpack (required)')
-      .option('-o, --overrides <paths...>', 'A list of directories and/or files inside the instance directory to include as overrides')
-      .option('-z, --no-zip', 'Don\'t create a ZIP archive. Place the output files in the current directory')
+      .requiredOption('-a, --author <author>', 'Author of this modpack (required)')
+      .requiredOption('-v, --version <version>', 'Version of this modpack (required)')
+      .option('-o, --overrides <paths...>', 'A list of directories and/or files inside instance directory to include as overrides')
+      .option('-z, --no-zip', 'Don\'t create a ZIP archive. Place output files in current directory')
       .option('-f, --force', 'Overwrite existing output files', false)
       .option('-d, --debug', 'Enable debug output of this script', false)
       .helpOption('-h, --help', 'Show this help text')
@@ -62,10 +62,10 @@ Example:
     - Exports the CurseForge Minecraft instance in C:\\CurseForge\\Instances\\MyModpack
     - Sets omgPacks as modpack author
     - Sets 0.0.1-alpha as modpack version
-    - Copies the directory C:\\CurseForge\\Instances\\MyModpack\\config\\exampleMod to overrides\\config\\exampleMod
-    - Copies the directory C:\\CurseForge\\Instances\\MyModpack\\scripts to overrides\\scripts
-    - Copies the file C:\\CurseForge\\Instances\\MyModpack\\options.txt to overrides\\options.txt
-    - Creates a ZIP archive containing a manifest and the overrides directory
+    - Copies directory C:\\CurseForge\\Instances\\MyModpack\\config\\exampleMod to overrides\\config\\exampleMod
+    - Copies directory C:\\CurseForge\\Instances\\MyModpack\\scripts to overrides\\scripts
+    - Copies file C:\\CurseForge\\Instances\\MyModpack\\options.txt to overrides\\options.txt
+    - Creates a ZIP archive containing manifest.json and overrides directory
   `)
       .parse(process.argv);
 
@@ -187,6 +187,11 @@ Example:
 
     // Set debug mode for various methods
     this.debugMode = this.options.debug;
+
+    if (this.debugMode) {
+      console.debug('CurseExportOptions:', this.options);
+      console.debug('Source:', this.optionsSource);
+    }
 
     // Instance directory must exist
     this.assertPathSync(this.options.instanceDir);

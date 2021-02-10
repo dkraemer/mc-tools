@@ -8,19 +8,32 @@ export abstract class McToolsBase {
   private readonly envVarOptions = 'MC_TOOLS_OPTIONS';
   private _debugMode = false;
 
-  protected fileOptions: McToolsOptions | undefined;
+  protected readonly optionsSource: string;
   protected readonly tempDir: string;
   protected readonly scriptPrefix = 'mc-';
   protected readonly optionsFilename = 'mc-tools.json';
   protected readonly manifestFilename = 'manifest.json';
+  protected fileOptions: McToolsOptions | undefined;
 
   protected constructor() {
     const tempDirPrefix = path.join(os.tmpdir(), this.tempDirPrefix);
     this.tempDir = fs.mkdtempSync(tempDirPrefix);
 
-    this.fileOptions = this.tryLoadOptionsFile(path.join(process.cwd(), this.optionsFilename));
+    // Try to load ./mc-tools.json
+    this.optionsSource = path.join(process.cwd(), this.optionsFilename);
+    this.fileOptions = this.tryLoadOptionsFile(this.optionsSource);
+
+    // ./mc-tools.json load failed, try MC_TOOLS_OPTIONS next
+    const envVarOptionsPath = process.env[this.envVarOptions];
+    if (!this.fileOptions && envVarOptionsPath) {
+      this.fileOptions = this.tryLoadOptionsFile(envVarOptionsPath);
+      this.optionsSource = envVarOptionsPath;
+    }
+
+    // Unable to load options from any file
+    // Options must be supplied as command-line arguments
     if (!this.fileOptions) {
-      this.fileOptions = this.tryLoadOptionsFile(process.env[this.envVarOptions]);
+      this.optionsSource = 'argv';
     }
   }
 

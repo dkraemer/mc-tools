@@ -1,6 +1,6 @@
 {
   "name": "@dkraemer/mc-tools",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.1-alpha.1",
   "description": "A collection of tools for Minecraft modpack authors",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
