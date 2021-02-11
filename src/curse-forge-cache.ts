@@ -128,11 +128,11 @@ export class CurseForgeCache {
     return this.lastUpdated;
   }
 
-  public getMods(): ReadonlyArray<Mod> {
+  public getMods(): readonly Mod[] {
     return this.mods;
   }
 
-  public getModFiles(): ReadonlyArray<ModFile> {
+  public getModFiles(): readonly ModFile[] {
     return this.modFiles;
   }
 
