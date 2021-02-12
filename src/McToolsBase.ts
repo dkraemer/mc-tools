@@ -2,6 +2,8 @@ import os from 'os';
 import path from 'path';
 import * as fs from 'fs-extra';
 import { McToolsOptions, validateMcToolsOptions } from './McToolsOptions';
+import { Manifest, validateManifest } from './curse-forge/manifest/Manifest';
+import { NotImplementedError } from './errors/NotImplementedError';
 
 export abstract class McToolsBase {
   private readonly tempDirPrefix = 'mc-tools-';
@@ -88,4 +90,27 @@ export abstract class McToolsBase {
       this.exit(`${pathToCheck} exists and option '--force' was not used`);
     }
   }
+
+  protected loadManifest(manifestPath: string): Manifest {
+    this.assertPathSync(manifestPath);
+
+    let manifest: Manifest;
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      manifest = require(manifestPath);
+
+    } catch (error) {
+      this.exit(`Unable to load ${manifestPath}`);
+      throw new NotImplementedError(); // Unreachable, but ts complains otherwise
+    }
+
+    if (!validateManifest(manifest)) {
+      this.exit(`Invalid manifest ${manifestPath}`);
+      throw new NotImplementedError(); // Unreachable, but ts complains otherwise
+    }
+
+    return manifest;
+  }
+
 }
