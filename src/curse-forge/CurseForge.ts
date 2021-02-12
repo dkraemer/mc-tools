@@ -12,11 +12,11 @@ export class CurseForge {
     return response.body;
   }
 
-  public static async getAddonInfo(addonID: number): Promise<Addon> {
+  public static async getAddon(addonID: number): Promise<Addon> {
     return await this.callApi(`/addon/${addonID}`);
   }
 
-  public static async getAddonInfoArray(addonIDs: number[]): Promise<Addon[]> {
+  public static async getAddonArray(addonIDs: number[]): Promise<Addon[]> {
     const response = await got.post<Addon[]>(`${this.apiBaseUrl}/addon`, {
       body: `[${addonIDs.join(',')}]`,
       responseType: 'json',
