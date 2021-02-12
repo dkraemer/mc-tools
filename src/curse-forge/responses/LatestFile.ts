@@ -1,0 +1,44 @@
+import { Dependency } from './Dependency';
+import { Module } from './Module';
+import { SortableGameVersion } from './SortableGameVersion';
+
+export interface LatestFile {
+  id: number;
+  displayName: string;
+  fileName: string;
+  fileDate: Date;
+  fileLength: number;
+  releaseType: number;
+  fileStatus: number;
+  downloadUrl: string;
+  isAlternate: boolean;
+  alternateFileId: number;
+  dependencies: Dependency[];
+  isAvailable: boolean;
+  modules: Module[];
+  packageFingerprint: number;
+  gameVersion: string[];
+  sortableGameVersion: SortableGameVersion[];
+  installMetadata?: unknown;
+  changelog?: unknown;
+  hasInstallScript: boolean;
+  isCompatibleWithClient: boolean;
+  categorySectionPackageType: number;
+  restrictProjectFileAccess: number;
+  projectStatus: number;
+  renderCacheId: number;
+  fileLegacyMappingId?: unknown;
+  projectId: number;
+  parentProjectFileId?: unknown;
+  parentFileLegacyMappingId?: unknown;
+  fileTypeId?: unknown;
+  exposeAsAlternative?: unknown;
+  packageFingerprintId: number;
+  gameVersionDateReleased: Date;
+  gameVersionMappingId: number;
+  gameVersionId: number;
+  gameId: number;
+  isServerPack: boolean;
+  serverPackFileId?: unknown;
+  gameVersionFlavor?: unknown;
+}

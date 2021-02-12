@@ -1,5 +1,7 @@
 /.github
+/.snippets
 /.vscode
+/lib/playground*
 /src
 /overrides
 /*.zip

@@ -3,15 +3,17 @@ import path from 'path';
 import archiver from 'archiver';
 import { writeFile } from 'fs/promises';
 import { Command } from 'commander';
-import { McToolsBase } from './mc-tools';
-import { CurseExportOptions } from './curse-export-options';
-import { MinecraftInstalledAddon, MinecraftInstance } from './curse-minecraft-instance';
-import { FileManifest, Manifest } from './curse-manifest';
+import { McToolsBase } from './McToolsBase';
+import { McToolsExportOptions } from './McToolsExportOptions';
+import { MinecraftInstance } from './curse-forge/instance/MinecraftInstance';
+import { MinecraftInstalledAddon } from './curse-forge/instance/MinecraftInstalledAddon';
+import { Manifest } from './curse-forge/manifest/Manifest';
+import { FileManifest } from './curse-forge/manifest/FileManifest';
 
-export class CurseExport extends McToolsBase {
+export class McToolsExport extends McToolsBase {
   private static hasInstance = false;
   private readonly scriptName: string;
-  private options: CurseExportOptions = {
+  private options: McToolsExportOptions = {
     instanceDir: '',
     author: '',
     version: ''
@@ -23,8 +25,8 @@ export class CurseExport extends McToolsBase {
     }
 
     this.hasInstance = true;
-    const instance = new CurseExport();
-    instance.privateMain().then(() => {
+    const instance = new McToolsExport();
+    instance.main().then(() => {
       instance.exit();
     });
   }
@@ -45,7 +47,7 @@ export class CurseExport extends McToolsBase {
     const program = new Command();
     program
       .name(this.scriptName)
-      .description('Exports an Overwolf CurseForge (Beta) Minecraft Instance as ZIP archive')
+      .description('Exports an Overwolf CurseForge Minecraft Instance as ZIP archive')
       .requiredOption('-i, --instance-dir <directory>', 'Path to CurseForge instance directory (required)')
       .requiredOption('-a, --author <author>', 'Author of this modpack (required)')
       .requiredOption('-v, --version <version>', 'Version of this modpack (required)')
@@ -69,7 +71,7 @@ Example:
   `)
       .parse(process.argv);
 
-    this.options = program.opts() as CurseExportOptions;
+    this.options = program.opts() as McToolsExportOptions;
   } // End of parseOptions()
 
   private async importMinecraftInstance(): Promise<MinecraftInstance> {
@@ -180,7 +182,7 @@ Example:
     return zipFilePath;
   } // End of createZipFileSync()
 
-  private async privateMain(): Promise<void> {
+  private async main(): Promise<void> {
 
     // Get options
     this.parseOptions();
@@ -189,7 +191,7 @@ Example:
     this.debugMode = this.options.debug;
 
     if (this.debugMode) {
-      console.debug('CurseExportOptions:', this.options);
+      console.debug('McToolsExportOptions:', this.options);
       console.debug('Source:', this.optionsSource);
     }
 
@@ -233,4 +235,4 @@ Example:
       }
     }
   } // End of privateMain()
-} // End of class CurseExport
+} // End of class McToolsExport

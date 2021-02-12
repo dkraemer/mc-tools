@@ -1,5 +1,7 @@
 /.github
+/.snippets
 /.vscode
 /bin
 /lib
 /node_modules
+/src/playground*

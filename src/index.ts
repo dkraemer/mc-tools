@@ -1,7 +1,7 @@
-export { CommonBase } from './common-base';
-export { McToolsOptions } from './mc-tools-options';
-export { McToolsBase } from './mc-tools';
-export { CurseExportOptions } from './curse-export-options';
-export { CurseExport } from './curse-export';
-export * from './curse-manifest';
-export * from './curse-minecraft-instance';
+export { CommonBase } from './CommonBase';
+export { McToolsOptions } from './McToolsOptions';
+export { McToolsBase } from './McToolsBase';
+export { McToolsExportOptions } from './McToolsExportOptions';
+export { McToolsExport } from './McToolsExport';
+export * from './curse-forge/manifest/Manifest';
+export * from './curse-forge/instance/MinecraftInstance';
