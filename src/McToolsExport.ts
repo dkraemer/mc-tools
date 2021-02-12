@@ -31,7 +31,7 @@ export class McToolsExport extends McToolsBase {
     });
   }
 
-  constructor() {
+  private constructor() {
     super();
     this.scriptName = this.scriptPrefix + path.basename(__filename, '.js');
   }

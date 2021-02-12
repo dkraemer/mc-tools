@@ -13,7 +13,7 @@ export abstract class McToolsBase {
   protected readonly scriptPrefix = 'mc-';
   protected readonly optionsFilename = 'mc-tools.json';
   protected readonly manifestFilename = 'manifest.json';
-  protected fileOptions: McToolsOptions | undefined;
+  protected readonly fileOptions: McToolsOptions | undefined;
 
   protected constructor() {
     const tempDirPrefix = path.join(os.tmpdir(), this.tempDirPrefix);
