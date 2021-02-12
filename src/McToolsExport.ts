@@ -234,5 +234,5 @@ Example:
         this.exit(error);
       }
     }
-  } // End of privateMain()
+  } // End of private main()
 } // End of class McToolsExport
