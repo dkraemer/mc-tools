@@ -1,4 +1,4 @@
-export interface CurseExportOptions {
+export interface McToolsExportOptions {
   instanceDir: string,
   author: string,
   version: string,
@@ -8,7 +8,7 @@ export interface CurseExportOptions {
   debug?: boolean
 }
 
-export function validateCurseExportOptions(options: CurseExportOptions): boolean {
+export function validateMcToolsExportOptions(options: McToolsExportOptions): boolean {
   return (typeof options.instanceDir === 'string') &&
     (typeof options.author === 'string') &&
     (typeof options.version === 'string');

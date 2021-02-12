@@ -5,7 +5,7 @@ import { CategorySection } from './CategorySection';
 import { GameVersionLatestFile } from './GameVersionLatestFile';
 import { LatestFile } from './LatestFile';
 
-export interface AddonInfo {
+export interface Addon {
   id: number;
   name: string;
   authors: Author[];

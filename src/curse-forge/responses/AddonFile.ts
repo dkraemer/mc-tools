@@ -1,7 +1,7 @@
 import { Dependency } from './Dependency';
 import { Module } from './Module';
 
-export interface AddonFileInfo {
+export interface AddonFile {
   id: number;
   displayName: string;
   fileName: string;

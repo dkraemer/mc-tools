@@ -2,7 +2,7 @@ import * as crypto from 'crypto';
 import * as fs from 'fs-extra';
 import * as cfApi from 'mc-curseforge-api';
 import { writeFile } from 'fs/promises';
-import { FileManifest } from './curse-manifest';
+import { FileManifest } from './curse-forge/manifest/FileManifest';
 
 export interface ProgressCallback {
   (addonName: string, current: number, last: number): void

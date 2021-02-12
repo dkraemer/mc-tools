@@ -1,14 +1,14 @@
 import * as fs from 'fs-extra';
 import path from 'path';
 import { writeFile } from 'fs/promises';
-import { McToolsBase } from './mc-tools';
-import { Manifest, validateManifest } from './curse-manifest';
+import { McToolsBase } from './McToolsBase';
+import { Manifest, validateManifest } from './curse-forge/manifest/Manifest';
 import { CurseForgeCache } from './curse-forge-cache';
-import { NotImplementedError } from './not-implemented-error';
+import { NotImplementedError } from './errors/NotImplementedError';
 import { CurseAddon, CurseAddonArray } from './curse-addon';
 import { Command } from 'commander';
 import { CurseAddonListOptions } from './curse-addon-list-options';
-import { CurseForge } from './curse-forge/curse-forge';
+import { CurseForge } from './curse-forge/CurseForge';
 
 export class CurseAddonList extends McToolsBase {
   private static hasInstance = false;

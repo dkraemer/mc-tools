@@ -1,7 +1,7 @@
 import os from 'os';
 import path from 'path';
 import * as fs from 'fs-extra';
-import { McToolsOptions, validateMcToolsOptions } from './mc-tools-options';
+import { McToolsOptions, validateMcToolsOptions } from './McToolsOptions';
 
 export abstract class McToolsBase {
   private readonly tempDirPrefix = 'mc-tools-';

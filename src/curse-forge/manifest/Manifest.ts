@@ -1,20 +1,6 @@
-import { CommonBase } from './common-base';
-
-export interface ModLoaderManifest {
-  id: string,
-  primary: boolean
-}
-
-export interface MinecraftManifest {
-  version: string,
-  modLoaders: ModLoaderManifest[]
-}
-
-export interface FileManifest {
-  projectID: number,
-  fileID: number,
-  required: boolean
-}
+import { CommonBase } from '../../CommonBase';
+import { FileManifest, validateFileManifests } from './FileManifest';
+import { MinecraftManifest } from './MinecraftManifest';
 
 export class Manifest extends CommonBase {
   minecraft: MinecraftManifest = {
@@ -28,21 +14,6 @@ export class Manifest extends CommonBase {
   author = '';
   files: FileManifest[] = [];
   overrides = 'overrides';
-}
-
-function validateFileManifests(fileManifests: FileManifest[]): boolean {
-  for (const file of fileManifests) {
-    if (typeof file.projectID !== 'number') {
-      return false;
-    }
-    if (typeof file.fileID !== 'number') {
-      return false;
-    }
-    if (typeof file.required !== 'boolean') {
-      return false;
-    }
-  }
-  return true;
 }
 
 export function validateManifest(manifest: Manifest): boolean {
