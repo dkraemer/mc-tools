@@ -16,7 +16,7 @@ export class CurseForge {
     return await this.callApi(`/addon/${addonID}`);
   }
 
-  public static async getAddonInfos(addonIDs: number[]): Promise<Addon[]> {
+  public static async getAddonInfoArray(addonIDs: number[]): Promise<Addon[]> {
     const response = await got.post<Addon[]>(`${this.apiBaseUrl}/addon`, {
       body: `[${addonIDs.join(',')}]`,
       responseType: 'json',
@@ -31,7 +31,7 @@ export class CurseForge {
     return await this.callApi(`/addon/${addonID}/file/${fileID}`);
   }
 
-  public static async getAddonFiles(addonID: number): Promise<AddonFile> {
+  public static async getAddonFileArray(addonID: number): Promise<AddonFile> {
     return await this.callApi(`/addon/${addonID}/files`);
   }
 
@@ -43,7 +43,7 @@ export class CurseForge {
     return await this.callApi(`/minecraft/version/${versionString}`);
   }
 
-  public static async getMinecraftVersions(): Promise<MinecraftVersion[]> {
+  public static async getMinecraftVersionArray(): Promise<MinecraftVersion[]> {
     return await this.callApi('/minecraft/version');
   }
 
@@ -51,7 +51,7 @@ export class CurseForge {
     return await this.callApi(`/minecraft/modloader/${versionName}`);
   }
 
-  public static async getMinecraftModloaders(): Promise<MinecraftModloader[]> {
+  public static async getMinecraftModloaderArray(): Promise<MinecraftModloader[]> {
     return await this.callApi('/minecraft/modloader');
   }
 }
