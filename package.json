@@ -5,7 +5,8 @@
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "bin": {
-    "mc-tools-export": "./bin/mc-tools-export"
+    "mc-tools-export": "./bin/mc-tools-export",
+    "mc-tools-mod-list": "./bin/mc-tools-mod-list"
   },
   "scripts": {
     "clean": "git clean -dXf --exclude=\"!node_modules/\"",
@@ -13,6 +14,7 @@
     "lint": "yarn eslint .",
     "pre-commit": "yarn lint && yarn build",
     "export": "yarn build && node ./bin/mc-tools-export",
+    "mod-list": "yarn build && node ./bin/mc-tools-mod-list",
     "playground": "yarn build && node ./lib/playground.js"
   },
   "husky": {

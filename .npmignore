@@ -10,4 +10,5 @@
 /.eslintrc.js
 /.gitattributes
 /manifest.json
+/MODLIST.md
 /tsconfig.json
