@@ -56,7 +56,9 @@ export class CurseForgeCache {
       const mod = await cfApi.getMod(modId);
       cache.mods.push(mod);
 
-      const modFile = (await mod.getFiles()).find(e => e.id === addon.fileID);
+      const modFiles = await mod.getFiles();
+
+      const modFile = (modFiles.find(e => e.id === addon.fileID));
       if (!modFile) {
         throw new CacheError(
           `Unable to download file metadata for projectID:'${addon.projectID}' fileID:'${addon.fileID}'`,

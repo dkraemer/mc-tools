@@ -3,7 +3,7 @@ export class NotImplementedError implements Error {
   message: string;
   stack?: string | undefined;
 
-  public constructor(message: string) {
+  public constructor(message?: string) {
     this.name = 'NOT_IMPLEMENTED';
     this.message = `[${this.name}]: ${message}`;
   }

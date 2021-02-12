@@ -1,6 +1,6 @@
 {
   "name": "@dkraemer/mc-tools",
-  "version": "0.1.1-alpha.1",
+  "version": "0.2.0-alpha.1",
   "description": "A collection of tools for Minecraft modpack authors",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -14,7 +14,8 @@
     "lint": "yarn eslint .",
     "pre-commit": "yarn lint && yarn build",
     "mc-curse-export": "yarn build && node ./bin/curse-export",
-    "mc-curse-addon-list": "yarn build && node ./bin/curse-addon-list"
+    "mc-curse-addon-list": "yarn build && node ./bin/curse-addon-list",
+    "play": "yarn build && node ./lib/playground.js"
   },
   "husky": {
     "hooks": {
@@ -41,6 +42,7 @@
     "archiver": "^5.2.0",
     "commander": "^7.0.0",
     "fs-extra": "^9.1.0",
+    "got": "^11.8.1",
     "mc-curseforge-api": "^2.2.3"
   },
   "devDependencies": {
