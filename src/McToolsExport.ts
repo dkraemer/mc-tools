@@ -102,6 +102,11 @@ Example:
 
     manifest.files =
       mci.installedAddons
+        .filter((e) => {
+          if (e.installedFile !== null) {
+            return e;
+          }
+        })
         .sort((a: MinecraftInstalledAddon, b: MinecraftInstalledAddon) => {
           return a.addonID - b.addonID;
         })
