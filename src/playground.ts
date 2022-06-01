@@ -20,16 +20,16 @@ class Playground extends McToolsBase {
   }
 
   private async main(): Promise<void> {
-    let response: AddonFile;
-    try {
-      // 272514/file/2920596
-      response = await CurseForge.getAddonFile(272514, 2920596);
-    } catch (error) {
-      throw error;
-    }
+    // let response: AddonFile;
+    // try {
+    //   // 272514/file/2920596
+    //   response = await CurseForge.getAddonFile(272514, 2920596);
+    // } catch (error) {
+    //   throw error;
+    // }
 
-    const str = JSON.stringify(response, null, 2)
-    console.log(response);
+    // const str = JSON.stringify(response, null, 2)
+    // console.log(response);
     return;
   }
 }

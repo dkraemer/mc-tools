@@ -1,5 +1,5 @@
 import path from 'path';
-import { writeFile } from 'fs/promises';
+import { writeFile, readFile } from 'fs/promises';
 import { Command } from 'commander';
 import { McToolsBase } from './McToolsBase';
 import { McToolsModListOptions } from './McToolsModListOptions';
@@ -43,6 +43,7 @@ export class McToolsModList extends McToolsBase {
     const program =
       new Command(this.scriptName)
         .description('Generate a list of mods')
+        .requiredOption('-a, --keyfile <path>', 'Path to the CurseForge API key')
         .option('-o, --output <path>', 'Path of file to be written', this.defaultListFilename)
         .option('-f, --force', 'Overwrite existing output', false)
         .option('-d, --debug', 'Enable debug output of this script', false)
@@ -57,12 +58,19 @@ export class McToolsModList extends McToolsBase {
       console.debug('Source:', this.optionsSource);
     }
 
+    this.assertPathSync(options.keyfile);
     this.assertPathNotExistSync(options.output, options.force);
+
+    const apiKey = await readFile(options.keyfile, {
+      encoding: 'utf8',
+      flag: 'r'
+    });
 
     const manifest = this.loadManifest(this.manifestPath);
     const addonIDs = manifest.files.map<number>(file => file.projectID);
-    const addons = await CurseForge.getAddonArray(addonIDs);
-    const addonsSorted = CurseForgeUtils.sortByName(addons);
+    const api = new CurseForge(apiKey);
+    const addons = await api.getAddonArray(addonIDs);
+    const addonsSorted = CurseForgeUtils.sortByName(addons.data);
     const list = this.generateGFMList(addonsSorted);
     const lastUpdated = new Date(Date.now()).toUTCString();
 
