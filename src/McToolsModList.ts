@@ -34,7 +34,7 @@ export class McToolsModList extends McToolsBase {
   public generateGFMList(addons: readonly Addon[]): string {
     return addons
       .map<string>(addon => {
-        return `- [x] [${addon.name}](${addon.websiteUrl}) - ${addon.summary}`;
+        return `- [x] [${addon.name}](${addon.links.websiteUrl}) - ${addon.summary}`;
       })
       .join('\n');
   }

@@ -4,13 +4,14 @@ import { Category } from './Category';
 import { CategorySection } from './CategorySection';
 import { GameVersionLatestFile } from './GameVersionLatestFile';
 import { LatestFile } from './LatestFile';
+import { Links } from './Links';
 
 export interface Addon {
   id: number;
   name: string;
   authors: Author[];
   attachments: Attachment[];
-  websiteUrl: string;
+  links: Links;
   gameId: number;
   summary: string;
   defaultFileId: number;
